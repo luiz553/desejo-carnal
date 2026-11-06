@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Desejo Carnal</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@200;300;600&family=Pinyon+Script&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#000; --red:#e4002b; --ink:#d9dde0; --dim:#5d6468;
+  --script:"Pinyon Script","Snell Roundhand","Apple Chancery",cursive;
+  --sans:"Montserrat","Helvetica Neue",Arial,sans-serif;
+  --p:0; --l:1; /* p = quanto já foi desbloqueado (0 a 1), l = 1 - p */
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px);
+  padding-bottom:env(safe-area-inset-bottom,0px);
+}
+*,*::before,*::after{box-sizing:inherit}
+html,body{height:100%;margin:0;background:var(--bg);overscroll-behavior:none}
+body{display:grid;place-items:center;overflow:hidden;color:var(--ink);font-family:var(--sans)}
+
+main{width:min(92vw,880px);display:grid;gap:clamp(18px,3vh,32px);justify-items:center;transform:translateY(calc(var(--shift,0px)*-1))}
+h1{margin:0;font:400 clamp(52px,14.5vw,128px)/1.1 var(--script);color:var(--red);white-space:nowrap;
+  text-shadow:0 0 calc(10px*var(--l)) rgba(228,0,43,.9);filter:blur(calc(6px*var(--l)));will-change:filter}
+.count{display:flex;align-items:baseline;gap:.9em;margin:0;font:200 clamp(20px,5.4vw,34px)/1 var(--sans);
+  letter-spacing:.14em;font-variant-numeric:tabular-nums;opacity:var(--p);filter:blur(calc(6px*var(--l)))}
+.count .sep{color:var(--dim);font-weight:300;font-size:.7em}
+
+/* vidro líquido na página toda; some conforme você desliza */
+.veil{position:fixed;inset:0;z-index:4;pointer-events:none;
+  background:linear-gradient(135deg,rgba(255,255,255,calc(.17*var(--l))),rgba(255,255,255,calc(.04*var(--l))) 50%,rgba(255,255,255,calc(.13*var(--l))));
+  -webkit-backdrop-filter:blur(calc(5px*var(--l)));backdrop-filter:blur(calc(5px*var(--l)))}
+.rim{position:fixed;inset:0;z-index:6;pointer-events:none;
+  box-shadow:inset 0 2px 0 rgba(255,255,255,.55),inset 0 -2px 0 rgba(255,255,255,.2),inset 2px 0 0 rgba(255,255,255,.25),inset -2px 0 0 rgba(255,255,255,.25),inset 0 60px 70px -50px rgba(255,255,255,.28)}
+
+/* 1) escrever a palavra  2) a palavra aparece  3) deslizar para desbloquear nome e data */
+.unlock{position:fixed;left:50%;top:63%;transform:translate(-50%,calc(var(--shift,0px)*-1));width:min(82vw,420px);max-width:calc(100vw - 32px);z-index:7;text-align:center}
+.stack{display:grid;grid-template-columns:minmax(0,1fr);width:100%}
+.stack>*{grid-area:1/1;align-self:center;transition:opacity .45s ease,transform .45s ease,visibility 0s}
+
+.ask label{display:block;margin:0 0 14px;font:600 11px/1.3 var(--sans);letter-spacing:.24em;text-transform:uppercase;color:#fff}
+.field{display:flex;align-items:center;height:64px;padding:0 6px 0 22px;border-radius:999px;
+  background:rgba(255,255,255,.06);-webkit-backdrop-filter:blur(14px) saturate(180%);backdrop-filter:blur(14px) saturate(180%);
+  box-shadow:inset 0 1.5px 0 rgba(255,255,255,.7),inset 0 -1.5px 0 rgba(255,255,255,.2),inset 0 0 0 .5px rgba(255,255,255,.45)}
+.field input{flex:1;width:100%;min-width:0;background:none;border:0;outline:0;color:#fff;font:400 24px/1 var(--script)}
+.field input::placeholder{color:rgba(255,255,255,.55)}
+.field button{flex:none;width:52px;height:52px;border:0;border-radius:50%;display:grid;place-items:center;cursor:pointer;
+  background:radial-gradient(circle at 35% 28%,#ff4a3d,#e4002b 58%,#9c0017);box-shadow:inset 0 1.5px 0 rgba(255,255,255,.55),0 6px 16px rgba(228,0,43,.45)}
+svg.arrow{width:24px;height:24px;stroke:#fff;fill:none;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
+
+.thanks{opacity:0;visibility:hidden;transform:translateY(8px)}
+.thanks small{display:block;font:600 11px/1 var(--sans);letter-spacing:.24em;text-transform:uppercase;color:#fff}
+.thanks b{display:block;margin:10px 0 0;font:400 clamp(38px,11vw,56px)/1.1 var(--script);color:var(--red);word-break:break-word}
+.thanks span{display:block;margin-top:12px;font:200 13px/1.5 var(--sans);letter-spacing:.16em;color:var(--ink);opacity:0;transition:opacity .8s ease}
+
+.slide{display:none;margin-top:26px}
+.track{position:relative;height:64px;border-radius:999px;overflow:hidden;touch-action:none;user-select:none;-webkit-user-select:none;
+  background:rgba(255,255,255,.08);-webkit-backdrop-filter:blur(14px) saturate(180%);backdrop-filter:blur(14px) saturate(180%);
+  box-shadow:inset 0 1.5px 0 rgba(255,255,255,.7),inset 0 -1.5px 0 rgba(255,255,255,.2),inset 0 0 0 .5px rgba(255,255,255,.3),inset 0 14px 22px -14px rgba(255,255,255,.35),0 18px 40px -18px rgba(0,0,0,.9)}
+.fill{position:absolute;left:0;top:0;bottom:0;width:100%;transform:scaleX(.1);transform-origin:left;border-radius:inherit;
+  background:linear-gradient(90deg,rgba(228,0,43,0),rgba(228,0,43,.6))}
+.knob{position:absolute;left:6px;top:6px;width:52px;height:52px;border-radius:50%;display:grid;place-items:center;cursor:grab;touch-action:none;outline:none;
+  background:radial-gradient(circle at 35% 28%,#ff4a3d,#e4002b 58%,#9c0017);
+  box-shadow:inset 0 1.5px 0 rgba(255,255,255,.55),0 6px 16px rgba(228,0,43,.45),0 2px 6px rgba(0,0,0,.6)}
+.knob:active{cursor:grabbing}
+.knob:focus-visible{box-shadow:0 0 0 3px rgba(255,255,255,.7)}
+.hint{margin:18px 0 0;font:200 12px/1 var(--sans);letter-spacing:.24em;color:rgba(255,255,255,.65)}
+
+@keyframes in{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+.sent .ask{opacity:0;visibility:hidden;pointer-events:none;transform:translateY(-8px)}
+.sent .thanks{opacity:1;visibility:visible;transform:none}
+.sent .slide{display:block;animation:in .5s ease .25s backwards}
+.open .slide{opacity:0;visibility:hidden;pointer-events:none;transition:opacity .45s ease,visibility 0s .45s}
+.open .thanks span{opacity:1}
+
+/* botão de pré-save: só existe depois que a contagem zera (classe .live) e a pessoa desbloqueou (.open) */
+.presave{display:none;margin:0 0 24px;height:56px;padding:0 34px;border-radius:999px;align-items:center;justify-content:center;text-decoration:none;color:#fff;
+  font:600 12px/1 var(--sans);letter-spacing:.24em;text-transform:uppercase;
+  background:radial-gradient(circle at 35% 28%,#ff4a3d,#e4002b 58%,#9c0017);
+  box-shadow:inset 0 1.5px 0 rgba(255,255,255,.55),0 8px 22px rgba(228,0,43,.5)}
+.open.live .presave{display:inline-flex;animation:in .6s ease}
+.live .thanks span{display:none}
+</style>
+</head>
+<body>
+<main>
+  <h1 id="name">Desejo Carnal</h1>
+  <p class="count" role="timer" aria-label="Tempo restante">
+    <span id="d">00</span><span class="sep">:</span><span id="h">00</span><span class="sep">:</span><span id="m">00</span><span class="sep">:</span><span id="s">00</span>
+  </p>
+</main>
+
+<div class="veil" aria-hidden="true"></div>
+<div class="rim" aria-hidden="true"></div>
+
+<div class="unlock" id="unlock">
+  <div class="stack">
+    <form class="ask" id="ask" autocomplete="off">
+      <label for="word">Descreva o desejo em uma palavra</label>
+      <div class="field">
+        <input id="word" type="text" maxlength="40" placeholder="digite aqui..." enterkeyhint="send">
+        <button type="submit" aria-label="Enviar"><svg class="arrow" viewBox="0 0 24 24"><path d="M4 12h15M13 6l6 6-6 6"/></svg></button>
+      </div>
+    </form>
+
+    <div class="thanks" id="thanks">
+      <a class="presave" href="https://ditto.fm/desejo-carnal-mackiell">Fazer o pré-save</a>
+      <small>Sua palavra</small>
+      <b id="sent"></b>
+      <span>nos vemos em 24 de novembro, às 18h</span>
+    </div>
+  </div>
+
+  <div class="slide" id="slide">
+    <div class="track" id="track">
+      <div class="fill" id="fill"></div>
+      <div class="knob" id="knob" role="slider" tabindex="0" aria-label="Deslize para desbloquear" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
+        <svg class="arrow" viewBox="0 0 24 24"><path d="M4 12h15M13 6l6 6-6 6"/></svg>
+      </div>
+    </div>
+    <p class="hint" id="hint">deslize para desbloquear</p>
+  </div>
+</div>
+
+<script>
+(function(){
+  var $=function(i){return document.getElementById(i)}, root=document.documentElement;
+  function p2(n){return String(n).padStart(2,"0")}
+
+  // Data fixa: 24 de novembro de 2026, 18:00 (horário de Brasília, UTC-3).
+  var target=new Date("2026-11-24T18:00:00-03:00").getTime(); // 24/11/2026 18:00 (Brasília)
+  function tick(){
+    var t=Math.max(0,target-Date.now());
+    var v=[Math.floor(t/864e5),Math.floor(t%864e5/36e5),Math.floor(t%36e5/6e4),Math.floor(t%6e4/1e3)];
+    ["d","h","m","s"].forEach(function(k,i){$(k).textContent=p2(v[i])});
+    var l=t===0;                       // contagem zerou: libera o pré-save
+    if(l!==live){live=l;$("unlock").classList.toggle("live",l);if(countEl)place();}
+  }
+  var live=false;
+  tick(); setInterval(tick,1000);
+
+  var track=$("track"),knob=$("knob"),fill=$("fill"),hint=$("hint"),box=$("unlock"),
+      max=1,cur=0,dragging=false,sx=0,sp=0,done=false,raf,pend=false;
+
+  function measure(){max=Math.max(1,track.clientWidth-knob.offsetWidth-12)}
+  function flush(){pend=false;root.style.setProperty("--p",cur.toFixed(3));root.style.setProperty("--l",(1-cur).toFixed(3))}
+  function setP(p){
+    cur=Math.min(1,Math.max(0,p));
+    if(!pend){pend=true;requestAnimationFrame(flush)} // atualiza o desfoque no máx. uma vez por quadro
+    knob.style.transform="translate3d("+cur*max+"px,0,0)";
+    fill.style.transform="scaleX("+((cur*max+32)/(max+64))+")";
+    hint.style.opacity=Math.max(0,1-cur*1.6);
+    knob.setAttribute("aria-valuenow",Math.round(cur*100));
+  }
+  function anim(to,ms,cb){
+    cancelAnimationFrame(raf);
+    var from=cur,t0=performance.now();
+    (function step(now){
+      var k=Math.min(1,(now-t0)/ms), e=1-Math.pow(1-k,3);
+      setP(from+(to-from)*e);
+      if(k<1) raf=requestAnimationFrame(step); else if(cb) cb();
+    })(t0);
+  }
+  function unlock(){
+    if(done) return; done=true;
+    anim(1,220,function(){ box.classList.add("open"); place(); });
+  }
+
+  knob.addEventListener("pointerdown",function(e){
+    if(done) return; cancelAnimationFrame(raf);
+    measure(); setP(cur);
+    dragging=true; sx=e.clientX; sp=cur;
+    try{knob.setPointerCapture(e.pointerId)}catch(_){}
+  });
+  knob.addEventListener("pointermove",function(e){ if(dragging) setP(sp+(e.clientX-sx)/max) });
+  function release(){
+    if(!dragging) return; dragging=false;
+    if(cur>=.88) unlock(); else anim(0,380);
+  }
+  knob.addEventListener("pointerup",release);
+  knob.addEventListener("pointercancel",release);
+  knob.addEventListener("keydown",function(e){
+    if(e.key==="ArrowRight"||e.key==="Enter"||e.key===" "){e.preventDefault();unlock()}
+  });
+
+  // posiciona o campo logo abaixo da data e sobe tudo quando o teclado abre
+  var countEl=document.querySelector(".count"),shift=0,vv=window.visualViewport;
+  function place(){
+    var base=countEl.getBoundingClientRect().bottom+shift,
+        vh=vv?vv.height:innerHeight,
+        kb=innerHeight-vh>120,
+        top=base+34;
+    box.style.top=top+"px";
+    shift=kb?Math.max(0,top+box.offsetHeight+16-vh):0;
+    root.style.setProperty("--shift",shift+"px");
+  }
+  if(vv) vv.addEventListener("resize",place);
+  window.addEventListener("focusin",function(){setTimeout(place,300)});
+  window.addEventListener("resize",function(){measure();setP(cur);place()});
+
+  // 1) a pessoa escreve a palavra; 2) ela aparece; 3) só então libera o deslizar
+  $("ask").addEventListener("submit",function(e){
+    e.preventDefault();
+    var w=$("word").value.trim(); if(!w) return;
+    $("sent").textContent=w;            // a palavra só aparece na tela; não é salva em lugar nenhum
+    document.activeElement&&document.activeElement.blur();
+    box.classList.add("sent");
+    measure(); setP(0); place();
+  });
+
+  measure(); setP(0); place();
+  if(document.fonts&&document.fonts.ready) document.fonts.ready.then(place);
+})();
+</script>
+</body>
+</html>
